@@ -23,3 +23,8 @@ obj/
 # Variables y secretos locales
 .env
 appsettings.Local.json
+App_Data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db-journal

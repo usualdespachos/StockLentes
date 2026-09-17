@@ -1,0 +1,10 @@
+@page
+@model StockLentes.Pages.Stock.IndexModel
+@using StockLentes.Services
+@{ViewData["Title"]="Stock";}
+<div class="page-head"><div><p class="eyebrow">INVENTARIO</p><h1>Stock disponible</h1><p>Cantidades en pares. Una lente física equivale a 0,5 pares.</p></div><a class="button" asp-page="Editar">+ Cargar combinación</a></div>
+<form method="get" class="search"><input asp-for="Search" aria-label="Buscar stock" placeholder="Buscar producto o código"/><button class="button secondary">Buscar</button><a asp-page="Index">Ver todos</a></form>
+<div class="panel table-wrap"><table><thead><tr><th>Producto</th><th>ESF</th><th>CIL</th><th>ADD</th><th>BASE</th><th>Pares</th><th>Estado</th><th></th></tr></thead><tbody>
+@foreach(var s in Model.Rows){<tr><td><strong>@s.Product.Name</strong><small>@s.Product.Code · @s.Product.Family.Sector</small></td><td>@LensValues.Grade(s.Sphere100)</td><td>@LensValues.Grade(s.Cylinder100)</td><td>@LensValues.Grade(s.Add100)</td><td>@LensValues.Grade(s.Base100)</td><td class="quantity">@LensValues.Pairs(s.QuantityHalfPairs)</td><td><span class="badge @(s.QuantityHalfPairs==0?"danger":s.QuantityHalfPairs<=s.Product.LowStockHalfPairs?"warning":"")">@(s.QuantityHalfPairs==0?"SIN STOCK":s.QuantityHalfPairs<=s.Product.LowStockHalfPairs?"Stock bajo":"Disponible")</span></td><td><a asp-page="Editar" asp-route-id="@s.Id">Ajustar →</a></td></tr>}
+@if(Model.Rows.Count==0){<tr><td colspan="8" class="empty">No hay combinaciones para mostrar. Cargá la primera.</td></tr>}
+</tbody></table></div><p class="hint">“Sin control de stock” se define en Productos. Una existencia con saldo cero siempre figura como SIN STOCK.</p>

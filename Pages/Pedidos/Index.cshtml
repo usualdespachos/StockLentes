@@ -1,0 +1,15 @@
+@page
+@model StockLentes.Pages.Pedidos.IndexModel
+@{ViewData["Title"]="Pedidos";}
+<div class="page-head"><div><p class="eyebrow">PRODUCCIÓN</p><h1>Pedidos</h1><p>Revisá y confirmá cada lente sin modificar lo solicitado.</p></div><a asp-page="Crear" class="button">+ Nuevo pedido</a></div>
+@if(TempData["ReviewError"] is string error){<div class="validation" role="alert"><ul><li>@error</li></ul></div>}
+<form method="get" class="search"><input asp-for="Search" style="min-width:180px" aria-label="Buscar pedido" placeholder="Orden o paciente"/><select asp-for="Status" style="width:auto;flex:0 1 220px" aria-label="Estado"><option value="">Todos los estados</option><option>PENDIENTE</option><option>TERMINADO</option></select><button class="button secondary">Buscar</button></form>
+<div class="panel table-wrap"><table><thead><tr><th>Orden</th><th>Paciente / óptica</th><th>Fecha</th><th>Lentes</th><th>Estado</th><th></th></tr></thead><tbody>
+@foreach(var o in Model.Rows){<tr><td class="code">@o.ExternalNumber</td><td><strong>@(string.IsNullOrWhiteSpace(o.PatientName)?"Paciente pendiente":o.PatientName)</strong><small>@(o.Store?.Name??"Óptica pendiente")</small></td><td>@o.OrderDate.ToString("dd/MM/yyyy")</td><td>@o.Lenses.Count</td><td><span class="badge @(o.Status=="PENDIENTE"?"warning":"")">@o.Status</span>
+@if(o.Status=="PENDIENTE"){
+@if(Model.Reviews.TryGetValue(o.Id,out var review)&&!review.CanFinish){<small class="amber" title="@string.Join("; ",review.Issues)">DATOS A COMPLETAR · @review.Issues.Count incidencia(s)</small>}
+<form method="post" asp-page-handler="Finish"><input type="hidden" name="orderId" value="@o.Id"/><button class="button secondary" aria-label="Terminar orden @o.ExternalNumber">Terminar</button></form>
+}
+</td><td><a asp-page="Detalle" asp-route-id="@o.Id">Abrir →</a></td></tr>}
+@if(Model.Rows.Count==0){<tr><td colspan="6" class="empty">No hay pedidos para esta búsqueda.</td></tr>}
+</tbody></table></div>

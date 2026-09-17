@@ -1,0 +1,12 @@
+@page "{id:int?}"
+@model StockLentes.Pages.Pedidos.CrearModel
+@{ViewData["Title"]=Model.OrderId.HasValue?"Completar pedido":"Nuevo pedido";}
+<a class="back" asp-page="Index">← Pedidos</a><h1>@ViewData["Title"]</h1><p>Guardá lo que tengas. Los datos faltantes quedarán pendientes de completar.</p>
+<form method="post" class="panel form-panel"><div asp-validation-summary="All" class="validation"></div><div class="form-grid">
+<input asp-for="Input.Version" type="hidden"/>
+<label>Número de orden<input asp-for="Input.Number"/><small>Si falta, se asignará una referencia provisional PEND.</small></label>
+<label>Óptica<select asp-for="Input.StoreId"><option value="">Pendiente de identificar</option>@foreach(var s in Model.Stores){<option value="@s.Id">@s.Name</option>}</select></label>
+<label>Paciente<input asp-for="Input.Patient"/></label>
+<label>Fecha<input asp-for="Input.Date" placeholder="aaaa-mm-dd"/></label></div>
+<p class="hint">El pedido queda PENDIENTE hasta que uses Terminar desde la lista.</p>
+<div class="actions"><button class="button">@(Model.OrderId.HasValue?"Guardar datos":"Crear pedido")</button><a asp-page="Index">Cancelar</a></div></form>

@@ -1,0 +1,8 @@
+@page "{id:int?}"
+@model StockLentes.Pages.Productos.EditarModel
+@{ViewData["Title"]=Model.Input.Id.HasValue?"Editar producto":"Nuevo producto";}
+<a asp-page="Index" class="back">← Productos</a><div class="page-head"><div><p class="eyebrow">CATÁLOGO</p><h1>@ViewData["Title"]</h1><p>Los productos sin control se registrarán sin descontar existencias.</p></div></div>
+<form method="post" class="panel form-panel"><div asp-validation-summary="All" class="validation"></div><input asp-for="Input.Id" type="hidden"/><input asp-for="Input.Version" type="hidden"/>
+<div class="form-grid"><label>Código<input asp-for="Input.Code" required maxlength="60"/><small>Se normalizan espacios y asteriscos finales: 10020* → 10020.</small></label><label>Nombre<input asp-for="Input.Name" required maxlength="160"/></label><label>Familia<select asp-for="Input.FamilyId" required><option value="">Seleccionar</option>@foreach(var f in Model.Families){<option value="@f.Id">@f.Name</option>}</select></label><label>Alerta de stock bajo (pares)<input asp-for="Input.LowStockPairs" type="number" step="0.5" min="0" max="100000"/></label></div>
+<label class="check"><input asp-for="Input.TracksStock"/> Controlar stock de este producto</label><label class="check"><input asp-for="Input.IsActive"/> Producto activo</label>
+<div class="actions"><button class="button">Guardar producto</button><a asp-page="Index">Cancelar</a></div></form>

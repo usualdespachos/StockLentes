@@ -1,0 +1,184 @@
+@page "{id:int}"
+@model StockLentes.Pages.Pedidos.AgregarLenteModel
+@{
+    ViewData["Title"] = "Cargar anteojo";
+}
+
+<a class="back" asp-page="Index">← Pedidos</a>
+
+<div class="page-head">
+    <div>
+        <p class="eyebrow">CARGA MANUAL</p>
+        <h1>Orden @Model.Order.ExternalNumber</h1>
+        <p>
+            @Model.Order.PatientName · Cargá los datos como aparecen en la receta.
+        </p>
+    </div>
+</div>
+
+<form method="post" class="panel form-panel">
+
+    <div asp-validation-summary="All" class="validation"></div>
+
+    <div class="form-grid">
+        <label>
+            Tipo de lente
+            <select asp-for="Input.ProductId">
+                <option value="">Seleccionar tipo de lente</option>
+
+                @foreach (var product in Model.Products)
+                {
+                    <option value="@product.Id">
+                        @product.Code · @product.Name
+                    </option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <div class="prescription-block">
+        <h3>LEJOS</h3>
+
+        <div class="prescription-table">
+            <div></div>
+            <strong>ESF</strong>
+            <strong>CIL</strong>
+            <strong>EJE</strong>
+            <strong>ADD</strong>
+
+            <strong>OD</strong>
+            <input asp-for="Input.OD.LejosSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.LejosCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.LejosAxis" placeholder="0" />
+            <input asp-for="Input.OD.Add" placeholder="+0.00" />
+
+            <strong>OI</strong>
+            <input asp-for="Input.OI.LejosSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.LejosCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.LejosAxis" placeholder="0" />
+            <input asp-for="Input.OI.Add" placeholder="+0.00" />
+        </div>
+    </div>
+
+    <div class="prescription-block">
+        <h3>INTERMEDIA</h3>
+
+        <div class="prescription-table prescription-table-small">
+            <div></div>
+            <strong>ESF</strong>
+            <strong>CIL</strong>
+            <strong>EJE</strong>
+
+            <strong>OD</strong>
+            <input asp-for="Input.OD.IntermediaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.IntermediaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.IntermediaAxis" placeholder="0" />
+
+            <strong>OI</strong>
+            <input asp-for="Input.OI.IntermediaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.IntermediaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.IntermediaAxis" placeholder="0" />
+        </div>
+    </div>
+
+    <div class="prescription-block">
+        <h3>CERCA</h3>
+
+        <div class="prescription-table prescription-table-small">
+            <div></div>
+            <strong>ESF</strong>
+            <strong>CIL</strong>
+            <strong>EJE</strong>
+
+            <strong>OD</strong>
+            <input asp-for="Input.OD.CercaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.CercaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.CercaAxis" placeholder="0" />
+
+            <strong>OI</strong>
+            <input asp-for="Input.OI.CercaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.CercaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.CercaAxis" placeholder="0" />
+        </div>
+    </div>
+
+    <div class="prescription-block">
+        <h3>BASE</h3>
+
+        <div class="prescription-table prescription-base">
+            <div></div>
+            <strong>BASE</strong>
+
+            <strong>OD</strong>
+            <input asp-for="Input.OD.Base" placeholder="Ej: 6.25" />
+
+            <strong>OI</strong>
+            <input asp-for="Input.OI.Base" placeholder="Ej: 6.25" />
+        </div>
+    </div>
+
+    <p class="hint">
+        Los campos que no correspondan pueden quedar vacíos.
+        En esta pantalla no se modifica el stock.
+    </p>
+
+    <div class="actions" style="flex-wrap:wrap">
+        <button
+            class="button"
+            type="submit"
+            name="action"
+            value="another">
+            Guardar y agregar otro
+        </button>
+
+        <button
+            class="button secondary"
+            type="submit"
+            name="action"
+            value="finish">
+            Guardar y volver a Pedidos
+        </button>
+
+        <a asp-page="Index">Cancelar</a>
+    </div>
+
+</form>
+
+<style>
+    .prescription-block {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0,0,0,.10);
+    }
+
+    .prescription-block h3 {
+        margin: 0 0 14px;
+        font-size: 14px;
+        letter-spacing: .08em;
+    }
+
+    .prescription-table {
+        display: grid;
+        grid-template-columns: 55px repeat(4, minmax(90px, 150px));
+        gap: 10px;
+        align-items: center;
+        max-width: 720px;
+    }
+
+    .prescription-table-small {
+        grid-template-columns: 55px repeat(3, minmax(90px, 150px));
+    }
+
+    .prescription-base {
+        grid-template-columns: 55px minmax(90px, 150px);
+    }
+
+    .prescription-table strong {
+        font-size: 13px;
+    }
+
+    .prescription-table input {
+        width: 100%;
+        min-width: 0;
+    }
+</style>

@@ -1,0 +1,11 @@
+@page
+@model StockLentes.Pages.Productos.IndexModel
+@{ViewData["Title"]="Productos";}
+<div class="page-head"><div><p class="eyebrow">CATÁLOGO</p><h1>Productos</h1><p>Un catálogo común para óptica y laboratorio.</p></div><a class="button" asp-page="Editar">+ Nuevo producto</a></div>
+<form method="get" class="search"><input asp-for="Search" aria-label="Buscar producto" placeholder="Buscar por código o nombre" /><button class="button secondary">Buscar</button><a asp-page="Index">Ver todos</a></form>
+<div class="panel table-wrap"><table><thead><tr><th>Código</th><th>Producto</th><th>Familia / sector</th><th>Control</th><th></th></tr></thead><tbody>
+@foreach(var p in Model.Products){<tr><td><span class="code">@p.Code</span></td><td><strong>@p.Name</strong>@if(p.IsDemo){<small>Demostración</small>}@if(!p.IsActive){<span class="badge muted">Inactivo</span>}</td><td>@p.Family.Name<small>@p.Family.Sector</small></td><td><span class="badge @(p.TracksStock?"":"muted")">@(p.TracksStock?"Stock controlado":"Sin control de stock")</span></td><td><a asp-page="Editar" asp-route-id="@p.Id">Editar →</a></td></tr>}
+@if(Model.Products.Count==0){<tr><td colspan="5" class="empty">No encontramos productos con esa búsqueda.</td></tr>}
+</tbody></table></div>
+<div class="section-head"><div><h2>Familias y reglas</h2><p>Definen qué graduaciones identifican cada existencia.</p></div><a class="button secondary" asp-page="Familia">+ Nueva familia</a></div>
+<div class="cards">@foreach(var f in Model.Families){<div class="panel"><span class="eyebrow">@f.Sector</span><h3>@f.Name</h3><p>@f.Rule.Name</p><small>@(f.Rule.ManualBase?"Base seleccionada manualmente":"Selección según la combinación disponible")</small></div>}</div>

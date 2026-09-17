@@ -1,0 +1,60 @@
+@page "{id:int}"
+@model StockLentes.Pages.Pedidos.DetalleModel
+@using StockLentes.Services
+@{ViewData["Title"]="Orden "+Model.Order.ExternalNumber;}
+<a class="back" asp-page="Index">← Pedidos</a>
+<div class="page-head"><div><p class="eyebrow">PRODUCCIÓN</p><h1>Orden @Model.Order.ExternalNumber</h1><p>@Model.Order.PatientName · @(Model.Order.Store?.Name??"Óptica pendiente") · @Model.Order.OrderDate.ToString("dd/MM/yyyy")</p></div><span class="badge @(Model.Order.Status=="PENDIENTE"?"warning":"")">@Model.Order.Status</span></div>
+<div asp-validation-summary="All" class="validation"></div>
+@if(Model.Order.Status=="PENDIENTE"){
+@if(!Model.Review.CanFinish){<div class="callout"><strong>DATOS A COMPLETAR / REQUIERE REVISIÓN</strong><ul>@foreach(var issue in Model.Review.Issues){<li>@issue</li>}</ul></div>}
+<div class="section-head" style="flex-wrap:wrap"><p>Podés agregar lentes hasta cerrar el pedido desde la lista. Una lente física = 0,5 pares.</p><a asp-page="Crear" asp-route-id="@Model.Order.Id">Completar datos del pedido</a><a class="button secondary" asp-page="AgregarLente" asp-route-id="@Model.Order.Id">+ Agregar lente</a></div>
+}
+@if(Model.Order.Lenses.Count==0){<div class="empty panel">Este pedido todavía no tiene lentes. Agregá al menos una para continuar.</div>}
+<div class="cards">
+@foreach(var lens in Model.Order.Lenses.OrderBy(x=>x.PairNumber).ThenBy(x=>x.PairType).ThenBy(x=>x.Eye)){
+<section class="panel" aria-label="@lens.Eye @lens.PairType par @lens.PairNumber">
+<p class="eyebrow">@lens.PairType · PAR @lens.PairNumber</p><h2>@lens.Eye</h2>
+@{var original=LensEntry.Read(lens,true);}
+<details class="hint"><summary>Ingreso original (sin modificar)</summary><p>Ojo @original.Eye · @original.Section · Par @original.Pair</p><p>Código @original.Code · @original.Name</p><p>ESF @original.Sphere · CIL @original.Cylinder · EJE @original.Axis · ADD @original.Add · BASE @original.Base</p></details>
+<div class="callout"><strong>Solicitado · @lens.OriginalProductCode</strong><p>@lens.OriginalProductName</p><p>ESF @LensValues.Grade(lens.Sphere100) · CIL @LensValues.Grade(lens.Cylinder100) · EJE @(lens.Axis?.ToString()??"—")</p><p>ADD @LensValues.Grade(lens.Add100) · BASE solicitada @LensValues.Grade(lens.Base100)</p></div>
+@if(Model.Confirmed.TryGetValue(lens.Id,out var movement)){
+<div class="section-head"><h3>Utilizado</h3><span class="badge">CONFIRMADA</span></div>
+<strong>@movement.ActualProductCode · @movement.ActualProductName</strong>
+<p class="hint">ESF @LensValues.Grade(movement.ActualSphere100) · CIL @LensValues.Grade(movement.ActualCylinder100) · EJE @(movement.ActualAxis?.ToString()??"—") · ADD @LensValues.Grade(movement.ActualAdd100)</p>
+<p>BASE sugerida @LensValues.Grade(movement.SuggestedBase100) → utilizada @LensValues.Grade(movement.ActualBase100)</p>
+@if(movement.StockBalanceId.HasValue){<p class="stock-current">@LensValues.Pairs(movement.StockBeforeHalfPairs!.Value) → <strong>@LensValues.Pairs(movement.StockAfterHalfPairs!.Value) pares</strong> · Baja 0,5</p>}
+else{<p class="stock-current">Sin control de stock · Lente registrada: 0,5 pares. Sin descuento de existencias.</p>}
+<small>@movement.CreatedAtUtc.ToString("dd/MM/yyyy HH:mm") UTC · @(movement.ManualSelection?"Selección manual":"Selección automática") · Baja @movement.IdempotencyKey</small>
+@if(!string.IsNullOrEmpty(movement.Reason)){<p class="hint">Motivo: @movement.Reason</p>}
+}else{
+<p class="hint"><a asp-page="AgregarLente" asp-route-id="@Model.Order.Id" asp-route-lensId="@lens.Id">Completar/corregir datos</a></p>
+Model.Previews.TryGetValue(lens.Id,out var preview);
+var productId=preview?.Product.Id??lens.SelectedProductId??lens.RequestedProductId??0;
+var available=Model.Balances.Where(x=>x.LensProductId==productId).ToList();
+<form method="post" asp-page-handler="Preview" data-lens-form>
+<input type="hidden" name="Input.LensId" value="@lens.Id"/>
+<input type="hidden" name="Input.ExpectedStockId" value="@preview?.Stock?.Id"/>
+<input type="hidden" name="Input.ExpectedVersion" value="@preview?.Stock?.Version"/>
+<div class="section-head"><h3>Revisar lente utilizada</h3></div>
+<label>Producto utilizado<select name="Input.ProductId" data-selection="product" required><option value="">Seleccionar producto</option>@foreach(var p in Model.Products){<option value="@p.Id" selected="@(p.Id==productId)">@p.Code · @p.Name</option>}</select></label>
+@if(preview?.Product.Family.Rule.UsesBase==true){
+<p class="hint">BASE sugerida: @LensValues.Grade(preview.SuggestedBase100)</p>
+<label>Base utilizada<select name="Input.Base100" data-selection="base"><option value="">Seleccionar base</option>@foreach(var basis in available.Where(x=>x.Base100.HasValue).Select(x=>x.Base100!.Value).Distinct().OrderBy(x=>x)){<option value="@basis" selected="@(basis==preview.SelectedBase100)">@LensValues.Grade(basis)</option>}</select></label>
+}
+
+@if(preview!=null){
+<div class="callout" role="status"><span class="badge @(preview.CanConfirm?"":"warning")">@(preview.State=="MANUAL"?"REQUIERE SELECCIÓN MANUAL":preview.State=="SIN_STOCK"?"SIN STOCK":preview.State=="SIN_CONTROL"?"SIN CONTROL DE STOCK":"STOCK ENCONTRADO")</span><p>@preview.Message</p>
+@if(preview.Stock!=null){<p>@StockLentes.Pages.Pedidos.DetalleModel.Combination(preview.Stock)</p><p>Stock actual: <strong>@LensValues.Pairs(preview.Stock.QuantityHalfPairs)</strong> · Baja: 0,5 · Stock posterior: <strong>@(preview.CanConfirm?LensValues.Pairs(preview.Stock.QuantityHalfPairs-1):"No permitido")</strong></p>}
+else{<p>Cantidad: 0,5 pares por lente.</p>}
+</div>
+}
+<label class="hint">Motivo del cambio (opcional)<input name="Input.Reason" maxlength="300" value="@(Model.Input.LensId==lens.Id?Model.Input.Reason:lens.SelectionReason)"/></label>
+<div class="actions" style="flex-wrap:wrap"><button type="submit" class="button secondary">Actualizar vista previa</button><button type="submit" asp-page-handler="SaveSelection" class="button secondary">Guardar selección sin descontar</button><button type="submit" asp-page-handler="Confirm" class="button" style="opacity:@(preview?.CanConfirm==true?"1":"0.5")" disabled="@(preview?.CanConfirm!=true)">Confirmar baja @lens.Eye</button></div>
+</form>
+}
+</section>
+}
+</div>
+@section Scripts{
+<script src="~/js/order-preview.js" asp-append-version="true"></script>
+}

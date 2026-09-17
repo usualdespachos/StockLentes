@@ -1,0 +1,10 @@
+@page
+@model StockLentes.Pages.Productos.FamiliaModel
+@{ViewData["Title"]="Nueva familia";}
+<a asp-page="Index" class="back">← Productos</a><h1>Nueva familia</h1><p>Elegí los datos que distinguen una existencia de otra. No depende del código de producto.</p>
+<form method="post" class="panel form-panel"><div asp-validation-summary="All" class="validation"></div>
+<div class="form-grid"><label>Nombre<input asp-for="Name" required maxlength="100"/></label><label>Sector<select asp-for="Sector"><option>OPTICA</option><option>LABORATORIO</option></select></label></div>
+<h3>Graduaciones que identifican el stock</h3><div class="checks"><label class="check"><input asp-for="Sphere"/> ESF</label><label class="check"><input asp-for="Cylinder"/> CIL</label><label class="check"><input asp-for="Add"/> ADD</label><label class="check"><input asp-for="Base"/> BASE</label></div>
+<label class="check"><input asp-for="ManualBase"/> La base se seleccionará manualmente al preparar la baja</label>
+<p class="hint">Sin campos seleccionados: una existencia por producto. Las reglas de familias con historial se conservarán para no alterar movimientos anteriores.</p>
+<div class="actions"><button class="button">Crear familia</button><a asp-page="Index">Cancelar</a></div></form>

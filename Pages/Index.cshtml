@@ -1,10 +1,14 @@
-﻿@page
+@page
 @model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
-
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@using StockLentes.Services
+@{ViewData["Title"]="Inicio";}
+<div class="page-head"><div><p class="eyebrow">VISTA GENERAL</p><h1>Tu laboratorio, en orden.</h1><p>Productos, existencias y movimientos en un solo lugar.</p></div><a class="button" asp-page="/Stock/Editar">+ Cargar stock</a></div>
+<div class="stats"><div class="panel stat"><span>Pedidos pendientes</span><strong>@Model.Pending</strong><small>Lentes por confirmar</small></div><div class="panel stat"><span>Pedidos terminados</span><strong>@Model.Finished</strong><small>Todas sus lentes confirmadas</small></div><div class="panel stat"><span>Stock para revisar</span><strong class="amber">@Model.Low</strong><small>Combinaciones en mínimo o sin stock</small></div><div class="panel stat"><span>Productos activos</span><strong>@Model.Products</strong><small>Catálogo configurable por familia</small></div></div>
+<div class="dashboard-grid"><section class="panel"><div class="section-head compact"><h2>Atención al stock</h2><a asp-page="/Stock/Index">Ver inventario →</a></div>
+@foreach(var s in Model.Attention){<div class="list-row"><div><strong>@s.Product.Name</strong><small>ESF @LensValues.Grade(s.Sphere100) · CIL @LensValues.Grade(s.Cylinder100)</small></div><span class="badge danger">@(s.QuantityHalfPairs==0?"SIN STOCK":LensValues.Pairs(s.QuantityHalfPairs)+" pares")</span></div>}
+@if(Model.Attention.Count==0){<p class="empty">No hay existencias por debajo del mínimo.</p>}
+<div class="callout"><strong>Cero stock ≠ sin control de stock</strong><p>Un producto controlado con saldo cero requiere reposición. Un producto sin control podrá registrarse sin descontar existencias.</p></div></section>
+<section class="panel"><div class="section-head compact"><h2>Actividad reciente</h2><a asp-page="/Movimientos/Index">Ver todo →</a></div>
+@foreach(var m in Model.Recent){<div class="list-row"><div><strong>@m.ActualProductName</strong><small>@m.Kind · @m.CreatedAtUtc.ToString("dd/MM/yyyy HH:mm") UTC</small></div><span class="movement-quantity">@(m.QuantityHalfPairs>0?"+":"")@LensValues.Pairs(m.QuantityHalfPairs)<small>pares</small></span></div>}
+</section></div>
+<section class="next-step"><div><p class="eyebrow">CONSTRUYENDO PASO A PASO</p><h2>Primero, una base confiable.</h2><p>Cargá un pedido, revisá cada lente utilizada y confirmá sus bajas con trazabilidad.</p></div><a class="button secondary" asp-page="/Pedidos/Index">Revisar pedidos →</a></section>
