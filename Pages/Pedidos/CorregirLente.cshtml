@@ -1,0 +1,32 @@
+@page "{id:int}"
+@model StockLentes.Pages.Pedidos.CorregirLenteModel
+@{ViewData["Title"]="Completar/corregir receta";}
+<a class="back" asp-page="Detalle" asp-route-id="@Model.Order.Id">← Volver al pedido</a>
+<div class="page-head"><div><p class="eyebrow">CORRECCIÓN</p><h1>Orden @Model.Order.ExternalNumber</h1><p>Completá los datos de esta lente. La receta original se conserva en el historial.</p></div></div>
+<form method="post" class="panel form-panel">
+ <div asp-validation-summary="All" class="validation"></div>
+ <input asp-for="LensId" type="hidden"/><input asp-for="Version" type="hidden"/>
+ <div class="form-grid">
+  <label>Producto<select asp-for="Input.ProductId"><option value="">Pendiente de identificar</option>@foreach(var p in Model.Products){<option value="@p.Id" data-code="@p.Code" data-name="@p.Name">@p.Code · @p.Name</option>}</select></label>
+  <label>Código escrito<input asp-for="Input.Code"/></label><label>Descripción<input asp-for="Input.Name"/></label>
+  <label>Ojo<select asp-for="Input.Eye"><option value="">Pendiente</option><option>OD</option><option>OI</option></select></label>
+  <label>Anteojo<input asp-for="Input.Pair"/></label>
+  <label>Sección<select asp-for="Input.Section"><option>ANTEOJO</option><option>LEJOS</option><option>INTERMEDIA</option><option>CERCA</option></select></label>
+ </div>
+ @if(Model.Input.Sections is {Count:>0}){
+  <div class="table-wrap"><table><thead><tr><th>Distancia</th><th>ESF</th><th>CIL</th><th>EJE</th></tr></thead><tbody>
+  @for(var i=0;i<Model.Input.Sections.Count;i++){
+   <tr><td>@Model.Input.Sections[i].Section<input asp-for="Input.Sections![i].Section" type="hidden"/></td><td><input asp-for="Input.Sections![i].Sphere" aria-label="@($"{Model.Input.Sections[i].Section} ESF")"/></td><td><input asp-for="Input.Sections![i].Cylinder" aria-label="@($"{Model.Input.Sections[i].Section} CIL")"/></td><td><input asp-for="Input.Sections![i].Axis" aria-label="@($"{Model.Input.Sections[i].Section} EJE")"/></td></tr>
+  }</tbody></table></div>
+ }else{
+  <div class="form-grid"><label>ESF<input asp-for="Input.Sphere"/></label><label>CIL<input asp-for="Input.Cylinder"/></label><label>EJE<input asp-for="Input.Axis"/></label></div>
+ }
+ <div class="form-grid"><label>ADD<input asp-for="Input.Add"/></label><label>BASE<input asp-for="Input.Base"/></label></div>
+ <div class="actions"><button class="button" type="submit">Guardar corrección</button><a asp-page="Detalle" asp-route-id="@Model.Order.Id">Cancelar</a></div>
+</form>
+@section Scripts {
+<script>
+document.getElementById('Input_ProductId').addEventListener('change',function(){const o=this.selectedOptions[0];if(o.value){document.getElementById('Input_Code').value=o.dataset.code;document.getElementById('Input_Name').value=o.dataset.name;}});
+document.getElementById('Input_Code').addEventListener('input',()=>document.getElementById('Input_ProductId').value='');
+</script>
+}

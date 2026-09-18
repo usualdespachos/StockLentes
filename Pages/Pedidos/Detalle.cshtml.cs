@@ -21,7 +21,13 @@ public class DetalleModel(StockDbContext db, OrderService orders):PageModel {
         public int? ExpectedStockId {get;set;}
         public Guid? ExpectedVersion {get;set;}
         public string? Reason {get;set;}
+        public bool OverrideGraduation {get;set;}
+        public decimal? Sphere {get;set;}
+        public decimal? Cylinder {get;set;}
+        public decimal? Add {get;set;}
+        public int? Axis {get;set;}
     }
+    private LensSelection Selection()=>new(Input.ProductId,Input.Base100,Input.StockId,Input.OverrideGraduation,LensValues.Hundredths(Input.Sphere),LensValues.Hundredths(Input.Cylinder),LensValues.Hundredths(Input.Add),Input.Axis);
     private async Task<IActionResult> Load(int id,bool useSelection=false){
         var order=await db.Orders.AsNoTracking().Include(x=>x.Store).Include(x=>x.Lenses).SingleOrDefaultAsync(x=>x.Id==id);
         if(order==null)return NotFound();Order=order;
@@ -29,8 +35,7 @@ public class DetalleModel(StockDbContext db, OrderService orders):PageModel {
         Balances=await db.Stock.AsNoTracking().OrderBy(x=>x.CombinationKey).ToListAsync();
         Confirmed=await db.Movements.AsNoTracking().Where(x=>x.OrderLens!.LensOrderId==id).ToDictionaryAsync(x=>x.OrderLensId!.Value);
         foreach(var lens in Order.Lenses.Where(x=>!Confirmed.ContainsKey(x.Id))){
-            var selection=useSelection&&lens.Id==Input.LensId?new LensSelection(Input.ProductId,Input.Base100,Input.StockId):await orders.DefaultSelectionAsync(lens);
-            try{Previews[lens.Id]=await orders.PreviewAsync(lens.Id,selection);}
+            try{var selection=useSelection&&lens.Id==Input.LensId?Selection():await orders.DefaultSelectionAsync(lens);Previews[lens.Id]=await orders.PreviewAsync(lens.Id,selection);}
             catch(InvalidOperationException e){ModelState.AddModelError("",$"{lens.Eye} par {lens.PairNumber}: {e.Message}");}
         }
         Review=await orders.InspectAsync(id);
@@ -40,7 +45,7 @@ public class DetalleModel(StockDbContext db, OrderService orders):PageModel {
     public Task<IActionResult> OnPostPreviewAsync(int id)=>Load(id,ModelState.IsValid);
     public async Task<IActionResult> OnPostSaveSelectionAsync(int id){
         if(ModelState.IsValid)try{
-            await orders.SaveSelectionAsync(id,Input.LensId,new(Input.ProductId,Input.Base100,Input.StockId),Input.Reason);
+            await orders.SaveSelectionAsync(id,Input.LensId,Selection(),Input.Reason);
             TempData["Success"]="Selección guardada sin descontar. Podés volver al listado y terminar el pedido.";
             return RedirectToPage(new{id});
         }catch(InvalidOperationException e){ModelState.AddModelError("",e.Message);}
@@ -49,7 +54,7 @@ public class DetalleModel(StockDbContext db, OrderService orders):PageModel {
     }
     public async Task<IActionResult> OnPostConfirmAsync(int id){
         if(ModelState.IsValid)try{
-            bool saved=await orders.ConfirmAsync(id,Input.LensId,new(Input.ProductId,Input.Base100,Input.StockId),Input.ExpectedStockId,Input.ExpectedVersion,Input.Reason);
+            bool saved=await orders.ConfirmAsync(id,Input.LensId,Selection(),Input.ExpectedStockId,Input.ExpectedVersion,Input.Reason);
             TempData["Success"]=saved?"Lente confirmada. Movimiento registrado.":"Esta lente ya estaba confirmada. No se descontó nuevamente.";
             return RedirectToPage(new{id});
         }catch(InvalidOperationException e){ModelState.AddModelError("",e.Message);}

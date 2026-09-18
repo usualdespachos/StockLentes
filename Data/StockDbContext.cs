@@ -8,6 +8,7 @@ public class StockDbContext(DbContextOptions<StockDbContext> options) : DbContex
  public DbSet<LensProduct> Products => Set<LensProduct>();
  public DbSet<LensOrder> Orders => Set<LensOrder>();
  public DbSet<OrderLens> OrderLenses => Set<OrderLens>();
+ public DbSet<PrescriptionSection> PrescriptionSections => Set<PrescriptionSection>();
  public DbSet<StockBalance> Stock => Set<StockBalance>();
  public DbSet<StockMovement> Movements => Set<StockMovement>();
  protected override void OnModelCreating(ModelBuilder b) {
@@ -27,6 +28,9 @@ public class StockDbContext(DbContextOptions<StockDbContext> options) : DbContex
   // Partial or repeated input is preserved; conflicting eye/pair identities block completion instead.
   b.Entity<OrderLens>().HasIndex(x=>new{x.LensOrderId,x.Eye,x.PairType,x.PairNumber});
   b.Entity<OrderLens>().Property(x=>x.Version).IsConcurrencyToken();
+  b.Entity<OrderLens>().HasIndex(x=>new{x.LensOrderId,x.PrescriptionGroupId,x.Eye}).IsUnique();
+  b.Entity<PrescriptionSection>().HasOne(x=>x.Lens).WithMany(x=>x.PrescriptionSections).HasForeignKey(x=>x.OrderLensId);
+  b.Entity<PrescriptionSection>().HasIndex(x=>new{x.OrderLensId,x.Section}).IsUnique();
   b.Entity<StockMovement>().HasOne(x=>x.OrderLens).WithMany().HasForeignKey(x=>x.OrderLensId);
   b.Entity<StockMovement>().HasOne(x=>x.ActualProduct).WithMany().HasForeignKey(x=>x.ActualProductId);
   b.Entity<StockMovement>().HasOne(x=>x.Balance).WithMany().HasForeignKey(x=>x.StockBalanceId);

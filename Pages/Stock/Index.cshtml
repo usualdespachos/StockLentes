@@ -2,9 +2,43 @@
 @model StockLentes.Pages.Stock.IndexModel
 @using StockLentes.Services
 @{ViewData["Title"]="Stock";}
-<div class="page-head"><div><p class="eyebrow">INVENTARIO</p><h1>Stock disponible</h1><p>Cantidades en pares. Una lente física equivale a 0,5 pares.</p></div><a class="button" asp-page="Editar">+ Cargar combinación</a></div>
-<form method="get" class="search"><input asp-for="Search" aria-label="Buscar stock" placeholder="Buscar producto o código"/><button class="button secondary">Buscar</button><a asp-page="Index">Ver todos</a></form>
-<div class="panel table-wrap"><table><thead><tr><th>Producto</th><th>ESF</th><th>CIL</th><th>ADD</th><th>BASE</th><th>Pares</th><th>Estado</th><th></th></tr></thead><tbody>
-@foreach(var s in Model.Rows){<tr><td><strong>@s.Product.Name</strong><small>@s.Product.Code · @s.Product.Family.Sector</small></td><td>@LensValues.Grade(s.Sphere100)</td><td>@LensValues.Grade(s.Cylinder100)</td><td>@LensValues.Grade(s.Add100)</td><td>@LensValues.Grade(s.Base100)</td><td class="quantity">@LensValues.Pairs(s.QuantityHalfPairs)</td><td><span class="badge @(s.QuantityHalfPairs==0?"danger":s.QuantityHalfPairs<=s.Product.LowStockHalfPairs?"warning":"")">@(s.QuantityHalfPairs==0?"SIN STOCK":s.QuantityHalfPairs<=s.Product.LowStockHalfPairs?"Stock bajo":"Disponible")</span></td><td><a asp-page="Editar" asp-route-id="@s.Id">Ajustar →</a></td></tr>}
-@if(Model.Rows.Count==0){<tr><td colspan="8" class="empty">No hay combinaciones para mostrar. Cargá la primera.</td></tr>}
-</tbody></table></div><p class="hint">“Sin control de stock” se define en Productos. Una existencia con saldo cero siempre figura como SIN STOCK.</p>
+<div class="page-head"><div><p class="eyebrow">INVENTARIO</p><h1>Stock disponible</h1><p>Cantidades en pares. Una lente física equivale a 0,5 pares.</p></div><a class="button" asp-page="Editar" asp-route-productId="@(Model.View=="OPTICA"?Model.SelectedProduct?.Id:null)">+ Cargar combinación</a></div>
+<nav class="actions" aria-label="Sector de stock"><a class="button @(Model.View=="OPTICA"?"":"secondary")" asp-page="Index" asp-route-View="OPTICA">Óptica</a><a class="button @(Model.View=="LABORATORIO"?"":"secondary")" asp-page="Index" asp-route-View="LABORATORIO">Laboratorio</a><a class="button @(Model.View=="OTROS"?"":"secondary")" asp-page="Index" asp-route-View="OTROS">Otros / DEMO</a></nav>
+<form method="get" class="panel form-panel"><input asp-for="View" type="hidden"/><div asp-validation-summary="All" class="validation"></div><div class="form-grid">
+@if(Model.View=="OPTICA"){
+<label>Producto<select asp-for="Code">@foreach(var p in StockLentes.Pages.Stock.IndexModel.OpticalCodes){<option value="@p.Key">@p.Key · @p.Value</option>}</select></label><label>ESF<input asp-for="Sphere" placeholder="Todas"/></label><label>CIL<input asp-for="Cylinder" placeholder="Todos"/></label>
+}else{<label>Código o producto<input asp-for="Search" placeholder="Buscar producto o código"/></label>}
+</div><div class="actions"><button class="button secondary">Ver stock</button><a asp-page="Index" asp-route-View="@Model.View" asp-route-Code="@Model.Code">Limpiar filtros</a></div></form>
+@if(Model.View=="OPTICA"){
+<h2>@Model.Code · @(Model.SelectedProduct?.Name??StockLentes.Pages.Stock.IndexModel.OpticalCodes[Model.Code])</h2>
+@if(Model.SelectedProduct==null){<div class="panel empty">Este producto todavía no está creado. <a asp-page="/Productos/Editar">Crear producto</a>. No se cargaron cantidades.</div>}
+else if(!Model.MatrixCompatible){<div class="panel">La familia de este producto no está configurada exclusivamente por ESF/CIL en ÓPTICA. Revisá su configuración antes de usar la matriz.</div>}
+else{
+<p class="hint">Seleccioná una cantidad para ajustar esa combinación. — significa combinación no cargada; 0 significa sin stock. EJE no identifica stock.</p>
+@foreach(var positive in new[]{true,false}){
+ var cells=Model.Rows.Where(x=>x.Sphere100.HasValue&&x.Cylinder100.HasValue&&(positive?x.Sphere100>=0:x.Sphere100<0)).ToList();
+ var spheres=cells.Select(x=>x.Sphere100!.Value).Distinct().OrderBy(x=>positive?x:-x).ToList();
+ var cylinders=cells.Select(x=>x.Cylinder100!.Value).Distinct().OrderByDescending(x=>x).ToList();
+ var lookup=cells.ToDictionary(x=>(x.Sphere100!.Value,x.Cylinder100!.Value));
+ <h3>@(positive?"ESF positivos y cero":"ESF negativos")</h3>
+ @if(cells.Count==0){<p class="hint">No hay combinaciones cargadas para este rango y filtro.</p>}
+ else{<div class="panel table-wrap stock-matrix"><table><caption class="hint">@Model.Code · @Model.SelectedProduct.Name · Stock en pares</caption><thead><tr><th scope="col">ESF ↓ / CIL →</th>@foreach(var c in cylinders){<th scope="col">@LensValues.Grade(c)</th>}</tr></thead><tbody>
+ @foreach(var s in spheres){<tr><th scope="row">@LensValues.Grade(s)</th>@foreach(var c in cylinders){<td>@if(lookup.TryGetValue((s,c),out var cell)){
+ var label=$"{Model.Code}, ESF {LensValues.Grade(s)}, CIL {LensValues.Grade(c)}, {LensValues.Pairs(cell.QuantityHalfPairs)} pares";
+ @if(Model.SelectedProduct.IsActive){<a class="matrix-cell @(cell.QuantityHalfPairs==0?"matrix-empty":"")" asp-page="Editar" asp-route-id="@cell.Id" aria-label="Ajustar @label">@LensValues.Pairs(cell.QuantityHalfPairs)</a>}else{<span>@LensValues.Pairs(cell.QuantityHalfPairs)</span>}
+ }else{<span title="Combinación no cargada">—</span>}</td>}</tr>}
+ </tbody></table></div>}
+}
+}
+}else{
+@foreach(var group in Model.Rows.GroupBy(x=>x.LensProductId)){
+ var product=group.First().Product;var rule=product.Family.Rule;
+ <div class="section-head"><h2>@product.Code · @product.Name</h2></div><div class="panel table-wrap"><table><thead><tr><th>Código</th><th>Producto</th>
+ @if(rule.UsesSphere){<th>ESF</th>}@if(rule.UsesCylinder){<th>CIL</th>}@if(rule.UsesAdd){<th>ADD</th>}@if(rule.UsesBase){<th>BASE</th>}<th>Stock (pares)</th><th>Acciones</th></tr></thead><tbody>
+ @foreach(var s in group){<tr><td>@product.Code</td><td>@product.Name</td>@if(rule.UsesSphere){<td>@LensValues.Grade(s.Sphere100)</td>}@if(rule.UsesCylinder){<td>@LensValues.Grade(s.Cylinder100)</td>}@if(rule.UsesAdd){<td>@LensValues.Grade(s.Add100)</td>}@if(rule.UsesBase){<td>@LensValues.Grade(s.Base100)</td>}<td class="quantity">@LensValues.Pairs(s.QuantityHalfPairs)</td><td>@if(product.IsActive&&product.TracksStock){<a asp-page="Editar" asp-route-id="@s.Id" asp-route-entry="true">Ingresar mercadería</a><br/><a asp-page="Editar" asp-route-id="@s.Id">Ajustar stock</a>}</td></tr>}
+ </tbody></table></div>
+}
+@if(Model.Rows.Count==0){<div class="empty panel">No hay combinaciones para esta búsqueda.</div>}
+}
+<p class="hint">Las cantidades se leen de la misma base que actualizan las bajas por pedido. Al volver a Stock se muestran los saldos vigentes.</p>
+<style>.stock-matrix table{min-width:0;width:auto;min-width:100%}.stock-matrix th,.stock-matrix td{text-align:center;min-width:85px}.stock-matrix th:first-child{position:sticky;left:0;background:var(--surface,#fff);z-index:1}.matrix-cell{display:block;padding:12px;border:1px solid currentColor;border-radius:6px;font-weight:600}.matrix-cell:hover,.matrix-cell:focus-visible{background:#e1efe8}.matrix-empty{color:#9a3434}</style>

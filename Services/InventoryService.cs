@@ -27,8 +27,10 @@ public static class LensValues {
  }
 }
 public class InventoryService(StockDbContext db) {
- public async Task SaveAsync(int? id,int productId,decimal? sphere,decimal? cylinder,decimal? add,decimal? basis,decimal pairs,string reason,Guid version,string operationKey) {
+ public async Task SaveAsync(int? id,int productId,decimal? sphere,decimal? cylinder,decimal? add,decimal? basis,decimal pairs,string reason,Guid version,string operationKey,bool entry=false) {
   if(string.IsNullOrWhiteSpace(reason))throw new InvalidOperationException("Indicá el motivo de la carga o ajuste.");
+  if(reason.Length>300)throw new InvalidOperationException("El motivo admite hasta 300 caracteres.");
+  if(entry&&(!id.HasValue||pairs<=0))throw new InvalidOperationException("La entrada requiere una combinación existente y una cantidad mayor que cero.");
   if(!Guid.TryParse(operationKey,out _))throw new InvalidOperationException("Formulario inválido. Volvé a abrirlo.");
   await using var tx=await db.Database.BeginTransactionAsync();
   if(await db.Movements.AnyAsync(x=>x.IdempotencyKey==operationKey))return;
@@ -47,8 +49,9 @@ public class InventoryService(StockDbContext db) {
    if(await db.Stock.AnyAsync(x=>x.LensProductId==productId&&x.CombinationKey==key))throw new InvalidOperationException("Esta combinación ya existe. Usá Ajustar.");
    balance=new StockBalance{LensProductId=productId,CombinationKey=key,Sphere100=s,Cylinder100=c,Add100=a,Base100=b};db.Stock.Add(balance);before=0;
   }
+  if(entry)quantity=LensValues.Halves((before+quantity)/2m);
   balance.QuantityHalfPairs=quantity;balance.Version=Guid.NewGuid();
-  db.Movements.Add(new StockMovement{Balance=balance,ActualProductId=productId,ActualProductName=product.Name,ActualProductCode=product.Code,Kind=id.HasValue?"AJUSTE":"INICIAL",QuantityHalfPairs=quantity-before,StockBeforeHalfPairs=before,StockAfterHalfPairs=quantity,Reason=reason.Trim(),IdempotencyKey=operationKey,ActualSphere100=s,ActualCylinder100=c,ActualAdd100=a,ActualBase100=b,ManualSelection=true});
+  db.Movements.Add(new StockMovement{Balance=balance,ActualProductId=productId,ActualProductName=product.Name,ActualProductCode=product.Code,Kind=entry?"ENTRADA":id.HasValue?"AJUSTE":"INICIAL",QuantityHalfPairs=quantity-before,StockBeforeHalfPairs=before,StockAfterHalfPairs=quantity,Reason=reason.Trim(),IdempotencyKey=operationKey,ActualSphere100=s,ActualCylinder100=c,ActualAdd100=a,ActualBase100=b,ManualSelection=true});
   await db.SaveChangesAsync();await tx.CommitAsync();
  }
 }

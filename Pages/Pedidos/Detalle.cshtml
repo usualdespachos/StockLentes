@@ -15,8 +15,12 @@
 <section class="panel" aria-label="@lens.Eye @lens.PairType par @lens.PairNumber">
 <p class="eyebrow">@lens.PairType · PAR @lens.PairNumber</p><h2>@lens.Eye</h2>
 @{var original=LensEntry.Read(lens,true);}
-<details class="hint"><summary>Ingreso original (sin modificar)</summary><p>Ojo @original.Eye · @original.Section · Par @original.Pair</p><p>Código @original.Code · @original.Name</p><p>ESF @original.Sphere · CIL @original.Cylinder · EJE @original.Axis · ADD @original.Add · BASE @original.Base</p></details>
+<details class="hint"><summary>Ingreso original (sin modificar)</summary><p>Ojo @original.Eye · @original.Section · Par @original.Pair</p><p>Código @original.Code · @original.Name</p><p>ESF @original.Sphere · CIL @original.Cylinder · EJE @original.Axis · ADD @original.Add · BASE @original.Base</p>
+@if(original.Sections!=null){foreach(var s in original.Sections){<p>@s.Section: ESF @(s.Sphere??"—") · CIL @(s.Cylinder??"—") · EJE @(s.Axis??"—")</p>}}
+</details>
 <div class="callout"><strong>Solicitado · @lens.OriginalProductCode</strong><p>@lens.OriginalProductName</p><p>ESF @LensValues.Grade(lens.Sphere100) · CIL @LensValues.Grade(lens.Cylinder100) · EJE @(lens.Axis?.ToString()??"—")</p><p>ADD @LensValues.Grade(lens.Add100) · BASE solicitada @LensValues.Grade(lens.Base100)</p></div>
+@{var recipe=LensEntry.Read(lens);}
+@if(recipe.Sections!=null){<div class="hint">@foreach(var s in recipe.Sections){<p>@s.Section: ESF @(s.Sphere??"—") · CIL @(s.Cylinder??"—") · EJE @(s.Axis??"—")</p>}</div>}
 @if(Model.Confirmed.TryGetValue(lens.Id,out var movement)){
 <div class="section-head"><h3>Utilizado</h3><span class="badge">CONFIRMADA</span></div>
 <strong>@movement.ActualProductCode · @movement.ActualProductName</strong>
@@ -27,7 +31,7 @@ else{<p class="stock-current">Sin control de stock · Lente registrada: 0,5 pare
 <small>@movement.CreatedAtUtc.ToString("dd/MM/yyyy HH:mm") UTC · @(movement.ManualSelection?"Selección manual":"Selección automática") · Baja @movement.IdempotencyKey</small>
 @if(!string.IsNullOrEmpty(movement.Reason)){<p class="hint">Motivo: @movement.Reason</p>}
 }else{
-<p class="hint"><a asp-page="AgregarLente" asp-route-id="@Model.Order.Id" asp-route-lensId="@lens.Id">Completar/corregir datos</a></p>
+<p class="hint"><a asp-page="CorregirLente" asp-route-id="@Model.Order.Id" asp-route-lensId="@lens.Id">Completar/corregir datos</a></p>
 Model.Previews.TryGetValue(lens.Id,out var preview);
 var productId=preview?.Product.Id??lens.SelectedProductId??lens.RequestedProductId??0;
 var available=Model.Balances.Where(x=>x.LensProductId==productId).ToList();
@@ -41,6 +45,19 @@ var available=Model.Balances.Where(x=>x.LensProductId==productId).ToList();
 <p class="hint">BASE sugerida: @LensValues.Grade(preview.SuggestedBase100)</p>
 <label>Base utilizada<select name="Input.Base100" data-selection="base"><option value="">Seleccionar base</option>@foreach(var basis in available.Where(x=>x.Base100.HasValue).Select(x=>x.Base100!.Value).Distinct().OrderBy(x=>x)){<option value="@basis" selected="@(basis==preview.SelectedBase100)">@LensValues.Grade(basis)</option>}</select></label>
 }
+@{
+var useActual=Model.Input.LensId==lens.Id?Model.Input.OverrideGraduation:lens.UsesActualGraduation;
+string Number(decimal? value)=>value?.ToString(System.Globalization.CultureInfo.InvariantCulture)??"";
+var esf=Model.Input.LensId==lens.Id?Model.Input.Sphere:(lens.UsesActualGraduation?lens.UsedSphere100:lens.Sphere100)/100m;
+var cil=Model.Input.LensId==lens.Id?Model.Input.Cylinder:(lens.UsesActualGraduation?lens.UsedCylinder100:lens.Cylinder100)/100m;
+var add=Model.Input.LensId==lens.Id?Model.Input.Add:(lens.UsesActualGraduation?lens.UsedAdd100:lens.Add100)/100m;
+var axis=Model.Input.LensId==lens.Id?Model.Input.Axis:lens.UsesActualGraduation?lens.UsedAxis:lens.Axis;
+}
+<details class="hint" open="@(useActual||preview?.CanConfirm!=true)"><summary>Graduación realmente utilizada (excepción)</summary>
+<label class="check"><input type="checkbox" name="Input.OverrideGraduation" value="true" checked="@useActual"/> Usar una graduación diferente a la solicitada</label><input type="hidden" name="Input.OverrideGraduation" value="false"/>
+<div class="form-grid"><label>ESF utilizada<input type="number" name="Input.Sphere" step="0.01" min="-100" max="100" value="@Number(esf)"/></label><label>CIL utilizada<input type="number" name="Input.Cylinder" step="0.01" min="-100" max="100" value="@Number(cil)"/></label><label>EJE utilizado<input type="number" name="Input.Axis" min="0" max="180" value="@axis"/></label><label>ADD utilizada<input type="number" name="Input.Add" step="0.01" min="-100" max="100" value="@Number(add)"/></label></div>
+<p>Se conserva la receta original. Actualizá la vista previa y guardá la selección antes de volver a Terminar.</p>
+</details>
 
 @if(preview!=null){
 <div class="callout" role="status"><span class="badge @(preview.CanConfirm?"":"warning")">@(preview.State=="MANUAL"?"REQUIERE SELECCIÓN MANUAL":preview.State=="SIN_STOCK"?"SIN STOCK":preview.State=="SIN_CONTROL"?"SIN CONTROL DE STOCK":"STOCK ENCONTRADO")</span><p>@preview.Message</p>

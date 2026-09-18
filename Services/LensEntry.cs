@@ -16,6 +16,7 @@ public class LensEntry {
  public string? Axis {get;set;}
  public string? Add {get;set;}
  public string? Base {get;set;}
+ public List<SectionEntry>? Sections {get;set;}
  public static LensEntry Read(OrderLens lens,bool original=false){
   var json=original?lens.OriginalInputJson:lens.RawInputJson;
   if(!string.IsNullOrEmpty(json))return JsonSerializer.Deserialize<LensEntry>(json)??new();
@@ -30,3 +31,4 @@ public class LensEntry {
   issues.Add(name+" no interpretable");return null;
  }
 }
+public record SectionEntry(string Section,string? Sphere,string? Cylinder,string? Axis);

@@ -3,6 +3,15 @@ using StockLentes.Data;
 using StockLentes.Models;
 using StockLentes.Services;
 if(args.Length==2 && args[0]=="--audit-demo") { await OrderChecks.AuditDemoAsync(args[1]); return; }
+if(args.Length==2 && args[0]=="--snapshot") {
+ await using var audit=new StockDbContext(new DbContextOptionsBuilder<StockDbContext>().UseSqlite("Data Source="+args[1]+";Mode=ReadOnly").Options);
+ Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new {
+  Stock=await audit.Stock.AsNoTracking().OrderBy(x=>x.Id).Select(x=>new{x.Id,x.QuantityHalfPairs,x.Version}).ToListAsync(),
+  Movements=await audit.Movements.AsNoTracking().OrderBy(x=>x.Id).Select(x=>x.Id).ToListAsync(),
+  Recipes=await audit.Orders.AsNoTracking().Where(x=>x.ExternalNumber.StartsWith("DEMO-RECETA")).Select(x=>new{x.Id,x.ExternalNumber,x.Status,Lenses=x.Lenses.Select(l=>new{l.Id,l.Eye,l.PairNumber,l.OriginalInputJson,l.RawInputJson,Sections=l.PrescriptionSections.Count})}).ToListAsync(),
+  LegacyConflicts=await audit.OrderLenses.AsNoTracking().Where(x=>x.Order.Status=="PENDIENTE").GroupBy(x=>new{x.LensOrderId,x.Eye,x.PairNumber}).Where(x=>x.Count()>1).Select(x=>new{x.Key,Count=x.Count()}).ToListAsync()
+ }));return;
+}
 var path=Path.Combine(Path.GetTempPath(),"stocklentes-check-"+Guid.NewGuid()+".db");
 var options=new DbContextOptionsBuilder<StockDbContext>().UseSqlite("Data Source="+path+";Pooling=False").Options;
 void Check(bool ok,string message){if(!ok)throw new Exception(message);Console.WriteLine("OK "+message);}
@@ -36,5 +45,7 @@ try{
  Check(LensValues.Key(new StockRule{UsesAdd=true},null,null,200,null)=="ADD=200","Bifocal sin BASE");
  await OrderChecks.RunAsync();
  await AtomicOrderChecks.RunAsync();
+ await PrescriptionChecks.RunAsync();
+ await StockModuleChecks.RunAsync();
  Console.WriteLine("Todas las comprobaciones pasaron.");
 }finally{Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();foreach(var suffix in new[]{"","-wal","-shm"})if(File.Exists(path+suffix))File.Delete(path+suffix);}

@@ -18,13 +18,13 @@
 
 <form method="post" class="panel form-panel">
 
-    <div asp-validation-summary="All" class="validation"></div>
+    <div asp-validation-summary="All" class="validation"></div><input asp-for="Input.EntryId" type="hidden"/>
 
     <div class="form-grid">
         <label>
             Tipo de lente
             <select asp-for="Input.ProductId">
-                <option value="">Seleccionar tipo de lente</option>
+                <option value="">Pendiente de identificar</option>
 
                 @foreach (var product in Model.Products)
                 {
@@ -36,6 +36,9 @@
         </label>
     </div>
 
+    <p class="hint">Una receta corresponde a un anteojo: una lente física por ojo, aunque tenga varias distancias.</p>
+    <div class="form-grid"><label><input asp-for="Input.IncludeOD"/> Incluir OD</label><label><input asp-for="Input.IncludeOI"/> Incluir OI</label></div>
+    <details><summary>Producto pendiente de identificar</summary><div class="form-grid"><label>Código escrito<input asp-for="Input.Code"/></label><label>Descripción<input asp-for="Input.Name"/></label></div></details>
     <div class="prescription-block">
         <h3>LEJOS</h3>
 
@@ -47,16 +50,16 @@
             <strong>ADD</strong>
 
             <strong>OD</strong>
-            <input asp-for="Input.OD.LejosSphere" placeholder="+0.00" />
-            <input asp-for="Input.OD.LejosCylinder" placeholder="0.00" />
-            <input asp-for="Input.OD.LejosAxis" placeholder="0" />
-            <input asp-for="Input.OD.Add" placeholder="+0.00" />
+            <input asp-for="Input.OD.LejosSphere" aria-label="OD LejosSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.LejosCylinder" aria-label="OD LejosCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.LejosAxis" aria-label="OD LejosAxis" placeholder="0" />
+            <input asp-for="Input.OD.Add" aria-label="OD Add" placeholder="+0.00" />
 
             <strong>OI</strong>
-            <input asp-for="Input.OI.LejosSphere" placeholder="+0.00" />
-            <input asp-for="Input.OI.LejosCylinder" placeholder="0.00" />
-            <input asp-for="Input.OI.LejosAxis" placeholder="0" />
-            <input asp-for="Input.OI.Add" placeholder="+0.00" />
+            <input asp-for="Input.OI.LejosSphere" aria-label="OI LejosSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.LejosCylinder" aria-label="OI LejosCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.LejosAxis" aria-label="OI LejosAxis" placeholder="0" />
+            <input asp-for="Input.OI.Add" aria-label="OI Add" placeholder="+0.00" />
         </div>
     </div>
 
@@ -70,14 +73,14 @@
             <strong>EJE</strong>
 
             <strong>OD</strong>
-            <input asp-for="Input.OD.IntermediaSphere" placeholder="+0.00" />
-            <input asp-for="Input.OD.IntermediaCylinder" placeholder="0.00" />
-            <input asp-for="Input.OD.IntermediaAxis" placeholder="0" />
+            <input asp-for="Input.OD.IntermediaSphere" aria-label="OD IntermediaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.IntermediaCylinder" aria-label="OD IntermediaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.IntermediaAxis" aria-label="OD IntermediaAxis" placeholder="0" />
 
             <strong>OI</strong>
-            <input asp-for="Input.OI.IntermediaSphere" placeholder="+0.00" />
-            <input asp-for="Input.OI.IntermediaCylinder" placeholder="0.00" />
-            <input asp-for="Input.OI.IntermediaAxis" placeholder="0" />
+            <input asp-for="Input.OI.IntermediaSphere" aria-label="OI IntermediaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.IntermediaCylinder" aria-label="OI IntermediaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.IntermediaAxis" aria-label="OI IntermediaAxis" placeholder="0" />
         </div>
     </div>
 
@@ -91,14 +94,14 @@
             <strong>EJE</strong>
 
             <strong>OD</strong>
-            <input asp-for="Input.OD.CercaSphere" placeholder="+0.00" />
-            <input asp-for="Input.OD.CercaCylinder" placeholder="0.00" />
-            <input asp-for="Input.OD.CercaAxis" placeholder="0" />
+            <input asp-for="Input.OD.CercaSphere" aria-label="OD CercaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OD.CercaCylinder" aria-label="OD CercaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OD.CercaAxis" aria-label="OD CercaAxis" placeholder="0" />
 
             <strong>OI</strong>
-            <input asp-for="Input.OI.CercaSphere" placeholder="+0.00" />
-            <input asp-for="Input.OI.CercaCylinder" placeholder="0.00" />
-            <input asp-for="Input.OI.CercaAxis" placeholder="0" />
+            <input asp-for="Input.OI.CercaSphere" aria-label="OI CercaSphere" placeholder="+0.00" />
+            <input asp-for="Input.OI.CercaCylinder" aria-label="OI CercaCylinder" placeholder="0.00" />
+            <input asp-for="Input.OI.CercaAxis" aria-label="OI CercaAxis" placeholder="0" />
         </div>
     </div>
 
@@ -110,10 +113,10 @@
             <strong>BASE</strong>
 
             <strong>OD</strong>
-            <input asp-for="Input.OD.Base" placeholder="Ej: 6.25" />
+            <input asp-for="Input.OD.Base" aria-label="OD Base" placeholder="Ej: 6.25" />
 
             <strong>OI</strong>
-            <input asp-for="Input.OI.Base" placeholder="Ej: 6.25" />
+            <input asp-for="Input.OI.Base" aria-label="OI Base" placeholder="Ej: 6.25" />
         </div>
     </div>
 
@@ -157,7 +160,7 @@
         letter-spacing: .08em;
     }
 
-    .prescription-table {
+    .prescription-table { overflow-x: auto;
         display: grid;
         grid-template-columns: 55px repeat(4, minmax(90px, 150px));
         gap: 10px;

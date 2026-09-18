@@ -1,21 +1,23 @@
 @page "{id:int?}"
 @model StockLentes.Pages.Stock.EditarModel
 @using StockLentes.Services
-@{ViewData["Title"]=Model.Input.Id.HasValue?"Ajustar existencia":"Cargar combinación";}
+@{ViewData["Title"]=Model.Input.Entry?"Ingresar mercadería":Model.Input.Id.HasValue?"Ajustar stock":"Cargar combinación";}
 <a asp-page="Index" class="back">← Stock</a><h1>@ViewData["Title"]</h1><p>Los cambios quedan registrados en Movimientos.</p>
 @if(!Model.Input.Id.HasValue){<form method="get" class="panel selector"><label>Producto<select name="productId"><option value="">Seleccionar producto</option>@foreach(var p in Model.Products){<option value="@p.Id" selected="@(p.Id==Model.Input.ProductId)">@p.Code · @p.Name</option>}</select></label><button class="button secondary">Elegir producto</button></form>}
 @if(Model.Rule!=null){
 <form method="post" class="panel form-panel"><div asp-validation-summary="All" class="validation"></div>
 <input asp-for="Input.Id" type="hidden"/><input asp-for="Input.ProductId" type="hidden"/><input asp-for="Input.Version" type="hidden"/><input asp-for="Input.OperationKey" type="hidden"/>
-<h2>@Model.Products.First(p=>p.Id==Model.Input.ProductId).Name</h2><p class="hint">Combinación: @Model.Rule.Name</p>
+<input asp-for="Input.Entry" type="hidden"/>
+<h2>@Model.Products.First(p=>p.Id==Model.Input.ProductId).Code · @Model.Products.First(p=>p.Id==Model.Input.ProductId).Name</h2><p class="hint">Combinación: @Model.Rule.Name</p>
 <div class="form-grid">
 @if(Model.Rule.UsesSphere){<label>ESF<input asp-for="Input.Sphere" type="number" step="0.01" min="-100" max="100" required readonly="@Model.Input.Id.HasValue"/></label>}
 @if(Model.Rule.UsesCylinder){<label>CIL<input asp-for="Input.Cylinder" type="number" step="0.01" min="-100" max="100" required readonly="@Model.Input.Id.HasValue"/></label>}
 @if(Model.Rule.UsesAdd){<label>ADD<input asp-for="Input.Add" type="number" step="0.01" min="-100" max="100" required readonly="@Model.Input.Id.HasValue"/></label>}
 @if(Model.Rule.UsesBase){<label>BASE<input asp-for="Input.Base" type="number" step="0.01" min="-100" max="100" required readonly="@Model.Input.Id.HasValue"/></label>}
-<label>Saldo total resultante (pares)<input asp-for="Input.Pairs" type="number" step="0.5" min="0" max="100000" required/><small>Ingresá el saldo final, no la cantidad a sumar.</small></label>
+<label>@(Model.Input.Entry?"Cantidad recibida (pares)":"Saldo total resultante (pares)")<input asp-for="Input.Pairs" type="number" step="0.5" min="@(Model.Input.Entry?"0.5":"0")" max="100000" required/><small>@(Model.Input.Entry?"Se sumará al stock actual y quedará registrada como ENTRADA.":"Ingresá el saldo final. Se registrará la diferencia como ajuste.")</small></label>
 </div>
 @if(Model.CurrentHalfPairs.HasValue){<p class="stock-current">Stock actual: <strong>@LensValues.Pairs(Model.CurrentHalfPairs.Value) pares</strong></p>}
 <label>Motivo<input asp-for="Input.Reason" required maxlength="300" placeholder="Ej.: carga inicial de prueba o corrección de conteo"/></label>
-<div class="actions"><button class="button">Confirmar @(Model.Input.Id.HasValue?"ajuste":"carga")</button><a asp-page="Index">Cancelar</a></div></form>
+@if(Model.Input.Id.HasValue&&!Model.Input.Entry){<p><a asp-page="Editar" asp-route-id="@Model.Input.Id" asp-route-entry="true">Ingresar mercadería en esta combinación</a></p>}
+<div class="actions"><button class="button">Confirmar @(Model.Input.Entry?"entrada":Model.Input.Id.HasValue?"ajuste":"carga")</button><a asp-page="Index">Cancelar</a></div></form>
 }else{<div class="empty panel">Elegí un producto con control de stock para cargar sus graduaciones.</div>}

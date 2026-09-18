@@ -87,6 +87,24 @@ public class OrderLens {
  public int? SelectedStockId { get; set; }
  public string SelectionReason { get; set; } = "";
  public Guid Version { get; set; } = Guid.NewGuid();
+ public Guid? PrescriptionGroupId { get; set; }
+ public bool RequiresUsedPrescription { get; set; }
+ public bool UsesActualGraduation { get; set; }
+ public int? UsedSphere100 { get; set; }
+ public int? UsedCylinder100 { get; set; }
+ public int? UsedAdd100 { get; set; }
+ public int? UsedAxis { get; set; }
+ public ICollection<PrescriptionSection> PrescriptionSections { get; set; } = new List<PrescriptionSection>();
+}
+// Recipe distances describe one physical lens; they never create movements by themselves.
+public class PrescriptionSection {
+ public int Id { get; set; }
+ public int OrderLensId { get; set; }
+ public OrderLens Lens { get; set; } = null!;
+ public string Section { get; set; } = "";
+ public string? Sphere { get; set; }
+ public string? Cylinder { get; set; }
+ public string? Axis { get; set; }
 }
 public class StockMovement {
  public int Id { get; set; }
